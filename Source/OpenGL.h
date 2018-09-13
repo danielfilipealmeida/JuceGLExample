@@ -85,7 +85,7 @@ class OpenGL {
     
     GLuint vertexShader, fragmentShader, shaderProgram;
     
-    std::unique_ptr<OpenGLShaderProgram::Attribute> position, normal, sourceColour, textureCoordIn;
+    std::unique_ptr<OpenGLShaderProgram::Attribute> position, normal, sourceColor, textureCoordIn;
     
 public:
     

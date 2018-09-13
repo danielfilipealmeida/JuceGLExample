@@ -16,11 +16,9 @@ OpenGL::OpenGL(OpenGLContext *context)
  
     initVBO();
     
-    
-    sourceColor.reset(createAttribute(context, shaderProgram, "position"));
-    
-    
     initShaders();
+    sourceColor.reset(createAttribute(*context, *shader, "sourceColour"));
+    position.reset(createAttribute(*context, *shader, "position"));
 }
 
 OpenGL::~OpenGL()
@@ -31,10 +29,6 @@ OpenGL::~OpenGL()
 
 void OpenGL::draw()
 {
-    //GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-    //glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    //glEnableVertexAttribArray(posAttrib);
-    
     shader->use();
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -136,7 +130,7 @@ void OpenGL::initShaders() {
     //glUseProgram(shaderProgram);
 }
 
-static OpenGLShaderProgram::Attribute* OpenGL::createAttribute (OpenGLContext& context,
+OpenGLShaderProgram::Attribute* OpenGL::createAttribute (OpenGLContext& context,
                                                         OpenGLShaderProgram& shader,
                                                         const String& name) {
     
