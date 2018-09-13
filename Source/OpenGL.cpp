@@ -9,17 +9,23 @@
 */
 
 #include "OpenGL.h"
-OpenGL::OpenGL()
+OpenGL::OpenGL(OpenGLContext *context)
 {
-    //initVAO();
+    openGLContext = context;
+    
+ 
     initVBO();
+    
+    
+    sourceColor.reset(createAttribute(context, shaderProgram, "position"));
+    
     
     initShaders();
 }
 
 OpenGL::~OpenGL()
 {
-    
+    shader.reset();
 }
 
 
@@ -28,6 +34,8 @@ void OpenGL::draw()
     //GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
     //glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
     //glEnableVertexAttribArray(posAttrib);
+    
+    shader->use();
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(shaderProgram);
@@ -70,21 +78,6 @@ GLuint OpenGL::loadShader(
 }
 
 
-void OpenGL::initVAO(){
-    /*
-    void* ptr = OpenGLHelpers::getExtensionFunction("glGenVertexArrays");
-    typedef void(*func_type)(GLsizei n, const GLuint *arrays);
-    ((func_type)ptr)(1, &vao);
-    
-    ptr = OpenGLHelpers::getExtensionFunction("glBindVertexArray");
-    typedef void(*func_type_2)(GLuint p1);
-    ((func_type_2)ptr)(vao);
-     */
-    
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-}
-
 void OpenGL::initVBO() {
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -92,12 +85,36 @@ void OpenGL::initVBO() {
 }
 
 void OpenGL::initShaders() {
+    
+    std::unique_ptr<OpenGLShaderProgram> newShader (new OpenGLShaderProgram (*openGLContext));
+    String statusText;
+    
+    if (newShader->addVertexShader (OpenGLHelpers::translateVertexShaderToV3(vertexSource))
+        && newShader->addFragmentShader (OpenGLHelpers::translateFragmentShaderToV3(fragmentSource))
+        && newShader->link()
+        ) {
+        
+        shader.reset (newShader.release());
+        shader->use();
+        
+        statusText = "GLSL: v " + String(OpenGLShaderProgram::getLanguageVersion(), 2);
+        
+    }
+    else {
+        statusText = newShader->getLastError();
+    }
+    
+    
+    /*
     vertexShader = loadShader(GL_VERTEX_SHADER, vertexSource);
     fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragmentSource);
     
     shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
+     */
+    
+    
     //glLinkProgram(shaderProgram);
     
     // check program
@@ -117,4 +134,16 @@ void OpenGL::initShaders() {
     //glBindFragDataLocation(shaderProgram, 0, "outColor");
     //
     //glUseProgram(shaderProgram);
+}
+
+static OpenGLShaderProgram::Attribute* OpenGL::createAttribute (OpenGLContext& context,
+                                                        OpenGLShaderProgram& shader,
+                                                        const String& name) {
+    
+    if (context.extensions.glGetAttribLocation (shader.getProgramID(),
+                                                name.toRawUTF8()) < 0)
+        return nullptr;
+    
+    return new OpenGLShaderProgram::Attribute(shader, name.toRawUTF8());
+    
 }

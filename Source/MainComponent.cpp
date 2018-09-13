@@ -20,6 +20,8 @@ MainComponent::MainComponent()
 
 MainComponent::~MainComponent()
 {
+    delete gl;
+    
     // This shuts down the GL system and stops the rendering calls.
     shutdownOpenGL();
 }
@@ -30,7 +32,7 @@ void MainComponent::initialise()
     // Initialise GL objects for rendering here.
     
     try {
-        gl = new OpenGL();
+        gl = new OpenGL(&openGLContext);
     }
     catch(std::exception& e) {
         std::cout << e.what() << std::endl;
@@ -46,8 +48,12 @@ void MainComponent::shutdown()
 
 void MainComponent::render()
 {
-    // This clears the context with a black background.
-    OpenGLHelpers::clear (Colours::black);
+    jassert(OpenGLHelpers::isContextActive());
+    
+    
+    auto desktopScale = (float) openGLContext.getRenderingScale();
+    OpenGLHelpers::clear (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+    
 
 }
 

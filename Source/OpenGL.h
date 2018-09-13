@@ -43,18 +43,26 @@ class OpenGL {
     /**! The Vertice Buffer */
     GLuint vbo;
     
-    /**! Vertex Array Object */
-    GLuint vao;
     
     /*!
      Vertex shader code
      */
     const char* vertexSource = R"glsl(
-    varying vec2 position;
+    attribute vec4 position;
+    attribute vec4 sourceColour;
+    attribute vec2 textureCoordIn;
+    
+    uniform mat4 projectionMatrix;
+    uniform mat4 viewMatrix;
+    
+    varying vec4 destinationColour;
+    varying vec2 textureCoordOut;
     
     void main()
     {
-        gl_Position = vec4(position, 0.0, 1.0);
+        destinationColour = sourceColour;
+        textureCoordOut = textureCoordIn;
+        gl_Position = vec4(position);
     }
     )glsl";
     
@@ -63,23 +71,28 @@ class OpenGL {
      Fragment Shader code
      */
     const char* fragmentSource = R"glsl(
-    varying vec4 outColor;
+    varying vec4 destinationColour;
+    varying vec2 textureCoordOut;
     
     void main()
     {
-        outColor = vec4(0.1, 0.1, 0.1, 1.0);
+        vec4 color = vec4(0.1, 0.5, 1.0, 1.0);
+        gl_FragColor = color;
     }
     )glsl";
     
     
     
     GLuint vertexShader, fragmentShader, shaderProgram;
+    
+    std::unique_ptr<OpenGLShaderProgram::Attribute> position, normal, sourceColour, textureCoordIn;
+    
 public:
     
     /*!
      Constructor. Sets up everything for using OpenGL to render on the screen
      */
-    OpenGL();
+    OpenGL(OpenGLContext *context);
     
     /*!
      Destructor. Cleans up everything
@@ -93,6 +106,8 @@ public:
     void draw();
     
 private:
+    std::unique_ptr<OpenGLShaderProgram> shader;
+    OpenGLContext *openGLContext;
     
     /*!
      
@@ -109,7 +124,10 @@ private:
     // STUFF
     
     void initShaders();
-    void initVAO();
     void initVBO();
+    
+    static OpenGLShaderProgram::Attribute* createAttribute (OpenGLContext& context,
+                                                            OpenGLShaderProgram& shader,
+                                                            const String& name);
     
 };
